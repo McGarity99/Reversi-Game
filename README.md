@@ -7,4 +7,5 @@ These include removal of several bugs, drastic alteration of the UI, and the int
 random-select AI with which a single user may play as opposed to the original design of player-vs-player.
 
 This project is not meant to be redistributed and is intended only as a demonstration of my skills with Java programming as
-well as desktop application development via JavaFX.
+well as desktop application development via JavaFX. Users are expected to already be familiar with basic rules regarding
+Reversi and/or Othello.
