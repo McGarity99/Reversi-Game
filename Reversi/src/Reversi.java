@@ -22,13 +22,14 @@ import java.util.Random;
 import java.lang.Runnable;
 import javafx.application.Platform;
 import java.util.Optional;
+import javafx.application.Application;
 
 /**
  * This Reversi class represents a
  * Reversi game based on the rules of Othello.
  */
 
-public class Reversi extends Stage {
+public class Reversi extends Application {
 
 	EventHandler<ActionEvent> exit;
 	HBox logoBar;
@@ -80,13 +81,18 @@ public class Reversi extends Stage {
     
     Reversi anotherGame;
     Scene mainScene;
+    Stage theStage;
+    
+    public static void main(String[] args) {
+    	launch(args);
+    } //main
 
     /**
-     * This constructor initializes the scene graph and
-     * all necessary nodes and instance variables.
+     * This method overrides the start method and initializes
+     * variables/values to begin the game.
      */
     
-    public Reversi() {
+   @Override public void start(Stage theStage) {
         
         setUpOther();
         Optional<ButtonType> r = aiQuery.showAndWait();
@@ -134,7 +140,7 @@ public class Reversi extends Stage {
         root.getChildren().addAll(logoBar, topMenu, mainPane, turnTracker, bottom);
         setUpScene();
         showPotentials();
-    } //absolute unit constructor
+    } //start method 
     
     /**
      * This method sets the actions for an ImageView upon being clicked.
@@ -1387,17 +1393,17 @@ public class Reversi extends Stage {
         if (redCount > blueCount) {
 
             redWins.showAndWait();
-            this.close();
+            theStage.close();
             System.exit(0);
         } //if red has higher score
         if (redCount < blueCount) {
             blueWins.showAndWait();
-            this.close();
+            theStage.close();
             System.exit(0);
         } //if blue has higher score
         if (redCount == blueCount) {
             draw.showAndWait();
-            this.close();
+            theStage.close();
             System.exit(0);
         } //if draw
 
@@ -1420,7 +1426,7 @@ public class Reversi extends Stage {
     	
         topMenu = new HBox(12);
         topMenu.setBackground(filler);
-        exit = event -> this.close();
+        exit = event -> theStage.close();
         exitButton = new Button("EXIT");
         exitButton.setOnAction(exit);
         exitButton.setTextFill(Color.ANTIQUEWHITE);
@@ -1455,11 +1461,12 @@ public class Reversi extends Stage {
      */
     
     private void setUpScene() {
+    	theStage = new Stage();
         mainScene = new Scene(root);
-        this.setTitle("Reversi App");
-        this.setScene(mainScene);
-        this.show();
-        this.sizeToScene();
+        theStage.setTitle("Reversi App");
+        theStage.setScene(mainScene);
+        theStage.show();
+        theStage.sizeToScene();
     } //setUpScene
     
     /**
