@@ -1,5 +1,3 @@
-
-
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.scene.layout.HBox;
@@ -23,6 +21,7 @@ import java.lang.Runnable;
 import javafx.application.Platform;
 import java.util.Optional;
 import javafx.application.Application;
+import java.util.Vector;
 
 /**
  * This Reversi class represents a
@@ -30,51 +29,50 @@ import javafx.application.Application;
  */
 
 public class Reversi extends Application {
-
 	EventHandler<ActionEvent> exit;
+    EventHandler<ActionEvent> potentialToggle;
 	HBox logoBar;
     HBox topMenu;
     HBox turnTracker;
     Button exitButton;
+    Button potentialSpaceToggleButton;
     HBox bottom;
     VBox root;
     
 
-    Image potenS = new Image("file:resources/potentialSpace.JPG");
-    Image emptyS = new Image("file:resources/emptySpace.JPG");
-    Image blueS = new Image("file:resources/blueSpace.JPG");
-    Image redS = new Image("file:resources/redSpace.JPG");
-    Image reversiLogo = new Image("file:resources/reversiLogo.JPG");
+    Image potenS = new Image("resources/potentialSpace.JPG");
+    Image emptyS = new Image("resources/emptySpace.JPG");
+    Image player1S = new Image("resources/redSpace.JPG");
+    Image player2S = new Image("resources/blueSpace.JPG");
+    Image reversiLogo = new Image("resources/reversiLogo.JPG");
     ButtonType exitDialog = new ButtonType("OK");
     ButtonType yesAI = new ButtonType("Yes");
     ButtonType noAI = new ButtonType("No");
     Alert aiQuery = new Alert(AlertType.CONFIRMATION, "Would You Like to Enable the AI?", yesAI, noAI);
-    Alert redWins = new Alert(AlertType.INFORMATION, "Red Player Wins!", exitDialog);
-    Alert blueWins = new Alert(AlertType.INFORMATION, "Blue Player Wins!", exitDialog);
+    Alert player1Wins = new Alert(AlertType.INFORMATION, "Player 1 Wins!", exitDialog);
+    Alert player2Wins = new Alert(AlertType.INFORMATION, "Player 2 Wins!", exitDialog);
     Alert draw = new Alert(AlertType.INFORMATION, "It's a Draw!", exitDialog);
-    Alert insuffMovesRed = new Alert(AlertType.NONE, "No valid moves remain for Red\n GAME OVER",
-                                     exitDialog);
-    Alert insuffMovesBlue = new Alert(AlertType.NONE,
-                                       "No valid moves remain for Blue\n GAME OVER", exitDialog);
+    Alert insuffMovesP1 = new Alert(AlertType.NONE, "No valid moves remain for Player 1\n GAME OVER", exitDialog);
+    Alert insuffMovesP2 = new Alert(AlertType.NONE, "No valid moves remain for Player 2\n GAME OVER", exitDialog);
     GridPane mainPane = new GridPane();
     
-    int blueCount = 2;
-    int redCount = 2;
+    int player2Count = 2;
+    int player1Count = 2;
     int emptyCount = 0;
     
     boolean keepPlaying = true;
     boolean aiEnabled = false;
     boolean clicked = false;
+    boolean potentialSpaceVisible = true;
     
-    Text redTracker = new Text("Red: " + redCount);
-    Text blueTracker = new Text("Blue: " + blueCount);
-    Text currentColor = new Text("red");	//red player always goes first
-    Text colorIndicator = new Text("Current Turn: " + currentColor.getText());
-    Text locationIndicator = new Text("Coordinates: ");
+    Text player1Tracker = new Text("P1: " + player1Count);
+    Text player2Tracker = new Text("P2: " + player2Count);
+    Text currentTurn = new Text("Player 1");	//player1 player always goes first
+    Text colorIndicator = new Text("Current Turn: " + currentTurn.getText());
     Text status = new Text("Player's turn");
     ImageView[][] imgGrid = new ImageView[8][8];
-    ImageView blueEX = new ImageView(blueS);
-    ImageView redEX = new ImageView(redS);
+    ImageView player2EX = new ImageView(player2S);
+    ImageView player1EX = new ImageView(player1S);
     ImageView emptyEX = new ImageView(emptyS);
     ImageView potEX = new ImageView(potenS);
     ImageView theLogo = new ImageView(reversiLogo);
@@ -114,26 +112,21 @@ public class Reversi extends Application {
                 
                 mainPane.add(tempView, i, i2);
                 imgGrid[i][i2] = tempView;
-                tempView.setOnMouseMoved(event -> {
-                	locationIndicator.setText("Coordinates: " +
-                			GridPane.getRowIndex(tempView) + ", " +
-                			GridPane.getColumnIndex(tempView));
-                });
                 if ((GridPane.getColumnIndex(imgGrid[i][i2]) == 3) &&
                     (GridPane.getRowIndex(imgGrid[i][i2]) == 3)) {
-                    imgGrid[i][i2].setImage(redS);
+                    imgGrid[i][i2].setImage(player1S);
                 } //if top-left of initial setup
                 if ((GridPane.getColumnIndex(imgGrid[i][i2]) == 4) &&
                     (GridPane.getRowIndex(imgGrid[i][i2]) == 4)) {
-                    imgGrid[i][i2].setImage(redS);
+                    imgGrid[i][i2].setImage(player1S);
                 } //if bottom-right of initial setup
                 if ((GridPane.getColumnIndex(imgGrid[i][i2]) == 4) &&
                     (GridPane.getRowIndex(imgGrid[i][i2]) == 3)) {
-                    imgGrid[i][i2].setImage(blueS);
+                    imgGrid[i][i2].setImage(player2S);
                 } // if top-right of initial setup
                 if ((GridPane.getColumnIndex(imgGrid[i][i2]) == 3) &&
                     (GridPane.getRowIndex(imgGrid[i][i2]) == 4)) {
-                    imgGrid[i][i2].setImage(blueS);
+                    imgGrid[i][i2].setImage(player2S);
                 } //if bottom-left of initial setup
             } //for
         } //for loop assigning ImageViews to GridPane
@@ -144,7 +137,7 @@ public class Reversi extends Application {
     
     /**
      * This method sets the actions for an ImageView upon being clicked.
-     * It is primarily intended to reduce the bloat of the event handler
+     * It is primarily intended to player1uce the bloat of the event handler
      * introduced in the constructor.
      * @param iv the ImageView on which the actions will be carried out
      */
@@ -154,15 +147,15 @@ public class Reversi extends Application {
     		 clicked = true;
              reverseColors(iv);
              setImage(iv);
-             if (currentColor.getText().equals("blue")) {
-                 countReds();
-                 countBlues();
-             } //if red played
+             if (currentTurn.getText().equals("Player 2")) {
+                 countPlayer1();
+                 countPlayer2();
+             } //if player1 played
              
-             if (currentColor.getText().equals("red")) {
-                 countBlues();
-                 countReds();
-             } //if blue played
+             if (currentTurn.getText().equals("Player 1")) {
+                 countPlayer2();
+                 countPlayer1();
+             } //if player2 played
              
              numOfValidMoves();
              
@@ -170,7 +163,7 @@ public class Reversi extends Application {
                  determineEnd();
              } //if all spaces used
          } //if user-clicked space is valid per color
-         hidePotentials();
+         hidePotentials(potentialSpaceVisible);
          if (clicked && aiEnabled) {
         	 status.setText("AI's turn");
         	 Runnable r = () -> {
@@ -197,55 +190,55 @@ public class Reversi extends Application {
     
     private void setImage(ImageView iv) {
     	
-        if (currentColor.getText().equals("red")) {
-            iv.setImage(redS);
-            currentColor.setText("blue");
-            colorIndicator.setText("Current turn: " + currentColor.getText());
+        if (currentTurn.getText().equals("Player 1")) {
+            iv.setImage(player1S);
+            currentTurn.setText("Player 2");
+            colorIndicator.setText("Current turn: " + currentTurn.getText());
             colorIndicator.setFill(Color.DODGERBLUE);
             return;
-        } //if red when called, changing to blue
-        if (currentColor.getText().equals("blue")) {
-            iv.setImage(blueS);
-            currentColor.setText("red");
-            colorIndicator.setText("Current turn: " + currentColor.getText());
+        } //if player1 when called, changing to player2
+        if (currentTurn.getText().equals("Player 2")) {
+            iv.setImage(player2S);
+            currentTurn.setText("Player 1");
+            colorIndicator.setText("Current turn: " + currentTurn.getText());
             colorIndicator.setFill(Color.DARKRED);
             return;
-        } //if blue when called, changing to red
+        } //if player2 when called, changing to player1
     } //setImage
 
     /**
      * This method searches through the 2D array of ImageViews (instance var)
-     * in search of ImageViews that have an {@code Image} of RED and counts them.
+     * in search of ImageViews that have an {@code Image} of Player 1 and counts them.
      */
     
-    private void countReds() {
-        redCount = 0;
+    private void countPlayer1() {
+        player1Count = 0;
         for (int i = 0; i < 8; i++) {
             for (int i2 = 0; i2 < 8; i2++) {
-                if (imgGrid[i][i2].getImage().equals(redEX.getImage())) {
-                    redCount++;
+                if (imgGrid[i][i2].getImage().equals(player1EX.getImage())) {
+                    player1Count++;
                 } //if
             } //for
         } //for
-        redTracker.setText("Red: " + redCount);
-    } //countReds
+        player1Tracker.setText("P1: " + player1Count);
+    } //countPlayer1
 
     /**
      * This method searches thorugh the 2D array of ImageViews (instance var)
-     * in search of ImageViews that have an {@code Image} of BLUE and counts them.
+     * in search of ImageViews that have an {@code Image} of Player 2 and counts them.
      */
     
-    private void countBlues() {
-        blueCount = 0;
+    private void countPlayer2() {
+        player2Count = 0;
         for (int i = 0; i < 8; i++) {
             for (int i2 = 0; i2 < 8; i2++) {
-                if (imgGrid[i][i2].getImage().equals(blueEX.getImage())) {
-                    blueCount++;
+                if (imgGrid[i][i2].getImage().equals(player2EX.getImage())) {
+                    player2Count++;
                 } //if
             } //for
         } //for
-        blueTracker.setText("Blue: " + blueCount);
-    } //countBlues
+        player2Tracker.setText("P2: " + player2Count);
+    } //countPlayer2
 
     /**
      * This method searches through the 2D array of ImageViews (instance var)
@@ -348,44 +341,44 @@ public class Reversi extends Application {
         int row = GridPane.getRowIndex(iv);
         boolean oppFound = false;
         boolean sameFound = false;
-        if (currentColor.getText().equals("red")) {
+        if (currentTurn.getText().equals("Player 1")) {
             if (imgGrid[col][row - 1].getImage()
-                .equals(blueEX.getImage())) {
+                .equals(player2EX.getImage())) {
                 oppFound = true;
                 for (int i = col, i2 = row - 1; i2 >= 0; i2--) {
                     if (imgGrid[i][i2].getImage()
-                        .equals(redEX.getImage())) {
+                        .equals(player1EX.getImage())) {
                         sameFound = true;
                         break;
-                    } //if closing red found
+                    } //if closing player1 found
                     if (imgGrid[i][i2].getImage()
                         .equals(emptyEX.getImage()) ||
                         imgGrid[i][i2].getImage().equals(potEX.getImage())) {
                         sameFound = false;
                         break;
                     } //if delimiter space found
-                } //for searching for another red to confirm placement
-            } //if a blue is found adjacent
-        } //if current color is red (check for blue then another red)
-        if (currentColor.getText().equals("blue")) {
+                } //for searching for another player1 to confirm placement
+            } //if a player2 is found adjacent
+        } //if current color is player1 (check for player2 then another player1)
+        if (currentTurn.getText().equals("Player 2")) {
             if (imgGrid[col][row - 1].getImage()
-                .equals(redEX.getImage())) {
+                .equals(player1EX.getImage())) {
                 oppFound = true;
                 for (int i = col, i2 = row - 1; i2 >= 0; i2--) {
                     if (imgGrid[i][i2].getImage()
-                        .equals(blueEX.getImage())) {
+                        .equals(player2EX.getImage())) {
                         sameFound = true;
                         break;
-                    } //if closing blue found
+                    } //if closing player2 found
                     if (imgGrid[i][i2].getImage()
                         .equals(emptyEX.getImage()) ||
                         imgGrid[i][i2].getImage().equals(potEX.getImage())) {
                         sameFound = false;
                         break;
                     } //if delimiter space found
-                } //for loop checking for another blue to confirm placement
-            } //if a red is found adjacent
-        } //if current color is blue (check for red than another blue)
+                } //for loop checking for another player2 to confirm placement
+            } //if a player1 is found adjacent
+        } //if current color is player2 (check for player1 than another player2)
         return sameFound && oppFound;
     } //checkUp
 
@@ -403,44 +396,44 @@ public class Reversi extends Application {
         int row = GridPane.getRowIndex(iv);
         boolean sameFound = false;
         boolean oppFound = false;
-        if (currentColor.getText().equals("red")) {
+        if (currentTurn.getText().equals("Player 1")) {
             if (imgGrid[col][row + 1].getImage()
-                .equals(blueEX.getImage())) {
+                .equals(player2EX.getImage())) {
                 oppFound = true;
                 for (int i = col, i2 = row + 1; i2 <= 7; i2++) {
                     if (imgGrid[i][i2].getImage()
-                        .equals(redEX.getImage())) {
+                        .equals(player1EX.getImage())) {
                         sameFound = true;
                         break;
-                    } //if closing red found
+                    } //if closing player1 found
                     if (imgGrid[i][i2].getImage()
                         .equals(emptyEX.getImage()) ||
                         imgGrid[i][i2].getImage().equals(potEX.getImage())) {
                         sameFound = false;
                         break;
                     } //if delimiter space found
-                } //for searching for another red to confirm placement
-            } //if a blue is found adjacent
-        } //if current color is red (check for blue then another red)
-        if (currentColor.getText().equals("blue")) {
+                } //for searching for another player1 to confirm placement
+            } //if a player2 is found adjacent
+        } //if current color is player1 (check for player2 then another player1)
+        if (currentTurn.getText().equals("Player 2")) {
             if (imgGrid[col][row + 1].getImage()
-                .equals(redEX.getImage())) {
+                .equals(player1EX.getImage())) {
                 oppFound = true;
                 for (int i = col, i2 = row + 1; i2 <= 7; i2++) {
                     if (imgGrid[i][i2].getImage()
-                        .equals(blueEX.getImage())) {
+                        .equals(player2EX.getImage())) {
                         sameFound = true;
                         break;
-                    } //if closing blue found
+                    } //if closing player2 found
                     if (imgGrid[i][i2].getImage()
                         .equals(emptyEX.getImage()) ||
                         imgGrid[i][i2].getImage().equals(potEX.getImage())) {
                         sameFound = false;
                         break;
                     } //if delimiter space found
-                } //for searching for another blue to confirm placement
-            } //if a red is found adjacent
-        } //if current color is blue (check for red then another blue)
+                } //for searching for another player2 to confirm placement
+            } //if a player1 is found adjacent
+        } //if current color is player2 (check for player1 then another player2)
         return sameFound && oppFound;
     } //checkDown
 
@@ -459,44 +452,44 @@ public class Reversi extends Application {
         int row = GridPane.getRowIndex(iv);
         boolean sameFound = false;
         boolean oppFound = false;
-        if (currentColor.getText().equals("red")) {
+        if (currentTurn.getText().equals("Player 1")) {
             if (imgGrid[col - 1][row].getImage()
-                .equals(blueEX.getImage())) {
+                .equals(player2EX.getImage())) {
                 oppFound = true;
                 for (int i = col - 1, i2 = row; i >= 0; i--) {
                     if (imgGrid[i][i2].getImage()
-                        .equals(redEX.getImage())) {
+                        .equals(player1EX.getImage())) {
                         sameFound = true;
                         break;
-                    } //if closing red found
+                    } //if closing player1 found
                     if (imgGrid[i][i2].getImage()
                         .equals(emptyEX.getImage()) ||
                         imgGrid[i][i2].getImage().equals(potEX.getImage())) {
                         sameFound = false;
                         break;
                     } //if empty space is found
-                } //for searching for another red to confirm placement
-            } //if a blue is found adjacent
-        } //if current color is red (check for blue then another red)
-        if (currentColor.getText().equals("blue")) {
+                } //for searching for another player1 to confirm placement
+            } //if a player2 is found adjacent
+        } //if current color is player1 (check for player2 then another player1)
+        if (currentTurn.getText().equals("Player 2")) {
             if (imgGrid[col - 1][row].getImage()
-                .equals(redEX.getImage())) {
+                .equals(player1EX.getImage())) {
                 oppFound = true;
                 for (int i = col - 1, i2 = row; i >= 0; i--) {
                     if (imgGrid[i][i2].getImage()
-                        .equals(blueEX.getImage())) {
+                        .equals(player2EX.getImage())) {
                         sameFound = true;
                         break;
-                    } //if closing blue found
+                    } //if closing player2 found
                     if (imgGrid[i][i2].getImage()
                         .equals(emptyEX.getImage()) ||
                         imgGrid[i][i2].getImage().equals(potEX.getImage())) {
                         sameFound = false;
                         break;
                     } //if delimiter space found
-                } //for searching for another blue to confirm placement
-            } //if red found adjacent
-        } //if current color is blue (check for red then another blue)
+                } //for searching for another player2 to confirm placement
+            } //if player1 found adjacent
+        } //if current color is player2 (check for player1 then another player2)
         return sameFound && oppFound;
     } //checkLeft
 
@@ -514,44 +507,44 @@ public class Reversi extends Application {
         int row = GridPane.getRowIndex(iv);
         boolean sameFound = false;
         boolean oppFound = false;
-        if (currentColor.getText().equals("red")) {
+        if (currentTurn.getText().equals("Player 1")) {
             if (imgGrid[col + 1][row].getImage()
-                .equals(blueEX.getImage())) {
+                .equals(player2EX.getImage())) {
                 oppFound = true;
                 for (int i = col + 1, i2 = row; i <= 7; i++) {
                     if (imgGrid[i][i2].getImage()
-                        .equals(redEX.getImage())) {
+                        .equals(player1EX.getImage())) {
                         sameFound = true;
                         break;
-                    } //if closing red found
+                    } //if closing player1 found
                     if (imgGrid[i][i2].getImage()
                         .equals(emptyEX.getImage()) ||
                         imgGrid[i][i2].getImage().equals(potEX.getImage())) {
                         sameFound = false;
                         break;
                     } //if delimiter space found
-                } //for searching for another red to confirm placement
-            } //if a blue is found adjacent
-        } //if current color is red (check for blue then another red)
-        if (currentColor.getText().equals("blue")) {
+                } //for searching for another player1 to confirm placement
+            } //if a player2 is found adjacent
+        } //if current color is player1 (check for player2 then another player1)
+        if (currentTurn.getText().equals("Player 2")) {
             if (imgGrid[col + 1][row].getImage()
-                .equals(redEX.getImage())) {
+                .equals(player1EX.getImage())) {
                 oppFound = true;
                 for (int i = col + 1, i2 = row; i <= 7; i++) {
                     if (imgGrid[i][i2].getImage()
-                        .equals(blueEX.getImage())) {
+                        .equals(player2EX.getImage())) {
                         sameFound = true;
                         break;
-                    } //if closing blue found
+                    } //if closing player2 found
                     if (imgGrid[i][i2].getImage()
                         .equals(emptyEX.getImage()) ||
                         imgGrid[i][i2].getImage().equals(potEX.getImage())) {
                         sameFound = false;
                         break;
                     } //if delimiter space found
-                } //for searching for another blue to confirm pacement
-            } //if a red is found adjacent
-        } //if current color is blue (check for red then another blue)
+                } //for searching for another player2 to confirm pacement
+            } //if a player1 is found adjacent
+        } //if current color is player2 (check for player1 then another player2)
         return oppFound && sameFound;
     } //checkRight
 
@@ -569,44 +562,44 @@ public class Reversi extends Application {
         int row = GridPane.getRowIndex(iv);
         boolean oppFound = false;
         boolean sameFound = false;
-        if (currentColor.getText().equals("red")) {
+        if (currentTurn.getText().equals("Player 1")) {
             if (imgGrid[col + 1][row - 1].getImage()
-                .equals(blueEX.getImage())) {
+                .equals(player2EX.getImage())) {
                 oppFound = true;
                 for (int i = col + 1, i2 = row - 1; i <= 7 && i2 >= 0; i++, i2--) {
                     if (imgGrid[i][i2].getImage()
-                        .equals(redEX.getImage())) {
+                        .equals(player1EX.getImage())) {
                         sameFound = true;
                         break;
-                    } //if closing red found
+                    } //if closing player1 found
                     if (imgGrid[i][i2].getImage()
                         .equals(emptyEX.getImage()) ||
                         imgGrid[i][i2].getImage().equals(potEX.getImage())) {
                         sameFound = false;
                         break;
                     } //if delimiter space found
-                } //for searching for another red to confirm placement
-            } //if blue found adjacent
-        } //if current color is red (check for blue then another red)
-        if (currentColor.getText().equals("blue")) {
+                } //for searching for another player1 to confirm placement
+            } //if player2 found adjacent
+        } //if current color is player1 (check for player2 then another player1)
+        if (currentTurn.getText().equals("Player 2")) {
             if (imgGrid[col + 1][row - 1].getImage()
-                .equals(redEX.getImage())) {
+                .equals(player1EX.getImage())) {
                 oppFound = true;
                 for (int i = col + 1, i2 = row - 1; i <= 7 && i2 >= 0; i++, i2--) {
                     if (imgGrid[i][i2].getImage()
-                        .equals(blueEX.getImage())) {
+                        .equals(player2EX.getImage())) {
                         sameFound = true;
                         break;
-                    } //if closing blue found
+                    } //if closing player2 found
                     if (imgGrid[i][i2].getImage()
                         .equals(emptyEX.getImage()) ||
                         imgGrid[i][i2].getImage().equals(potEX.getImage())) {
                         sameFound = false;
                         break;
                     } //if delimiter space found
-                } //for searching for another blue to confirm placement
-            } //if red found adjacent
-        } //if current color is blue (check for red then another blue)
+                } //for searching for another player2 to confirm placement
+            } //if player1 found adjacent
+        } //if current color is player2 (check for player1 then another player2)
         return oppFound && sameFound;
     } //checkUpRight
 
@@ -625,44 +618,44 @@ public class Reversi extends Application {
         int row = GridPane.getRowIndex(iv);
         boolean sameFound = false;
         boolean oppFound = false;
-        if (currentColor.getText().equals("red")) {
+        if (currentTurn.getText().equals("Player 1")) {
             if (imgGrid[col + 1][row + 1].getImage()
-                .equals(blueEX.getImage())) {
+                .equals(player2EX.getImage())) {
                 oppFound = true;
                 for (int i = col + 1, i2 = row + 1; i <= 7 && i2 <= 7; i++, i2++) {
                     if (imgGrid[i][i2].getImage()
-                        .equals(redEX.getImage())) {
+                        .equals(player1EX.getImage())) {
                         sameFound = true;
                         break;
-                    } //if closing red found
+                    } //if closing player1 found
                     if (imgGrid[i][i2].getImage()
                         .equals(emptyEX.getImage()) ||
                         imgGrid[i][i2].getImage().equals(potEX.getImage())) {
                         sameFound = false;
                         break;
                     } //if delimiter space found
-                } //for searching for second red to confirm placement
-            } //if blue found adjacent
-        } //if current color red (check for blue then another red)
-        if (currentColor.getText().equals("blue")) {
+                } //for searching for second player1 to confirm placement
+            } //if player2 found adjacent
+        } //if current color player1 (check for player2 then another player1)
+        if (currentTurn.getText().equals("Player 2")) {
             if (imgGrid[col + 1][row + 1].getImage()
-                .equals(redEX.getImage())) {
+                .equals(player1EX.getImage())) {
                 oppFound = true;
                 for (int i = col + 1, i2 = row + 1; i <= 7 && i2 <= 7; i++, i2++) {
                     if (imgGrid[i][i2].getImage()
-                        .equals(blueEX.getImage())) {
+                        .equals(player2EX.getImage())) {
                         sameFound = true;
                         break;
-                    } //if closing blue found
+                    } //if closing player2 found
                     if (imgGrid[i][i2].getImage()
                         .equals(emptyEX.getImage()) ||
                         imgGrid[i][i2].getImage().equals(potEX.getImage())) {
                         sameFound = false;
                         break;
                     } //if delimiter space found
-                } //for searching for second blue to confirm placement
-            } //if red found adjacent
-        } //if current color is blue (check for red then another blue)
+                } //for searching for second player2 to confirm placement
+            } //if player1 found adjacent
+        } //if current color is player2 (check for player1 then another player2)
         return sameFound && oppFound;
     } //checkDownRight
 
@@ -680,44 +673,44 @@ public class Reversi extends Application {
         int row = GridPane.getRowIndex(iv);
         boolean sameFound = false;
         boolean oppFound = false;
-        if (currentColor.getText().equals("red")) {
+        if (currentTurn.getText().equals("Player 1")) {
             if (imgGrid[col - 1][row - 1].getImage()
-                .equals(blueEX.getImage())) {
+                .equals(player2EX.getImage())) {
                 oppFound = true;
                 for (int i = col - 1, i2 = row - 1; i >= 0 && i2 >= 0; i--, i2--) {
                     if (imgGrid[i][i2].getImage()
-                        .equals(redEX.getImage())) {
+                        .equals(player1EX.getImage())) {
                         sameFound = true;
                         break;
-                    } //if closing red found
+                    } //if closing player1 found
                     if (imgGrid[i][i2].getImage()
                         .equals(emptyEX.getImage()) ||
                         imgGrid[i][i2].getImage().equals(potEX.getImage())) {
                         sameFound = false;
                         break;
                     } //if delimiter space found
-                } //for searching for second red to confirm placement
-            } //if blue found adjacent
-        } //if current turn is red (check for blue then red)
-        if (currentColor.getText().equals("blue")) {
+                } //for searching for second player1 to confirm placement
+            } //if player2 found adjacent
+        } //if current turn is player1 (check for player2 then player1)
+        if (currentTurn.getText().equals("Player 2")) {
             if (imgGrid[col - 1][row - 1].getImage()
-                .equals(redEX.getImage())) {
+                .equals(player1EX.getImage())) {
                 oppFound = true;
                 for (int i = col - 1, i2 = row - 1; i >= 0 && i2 >= 0; i--, i2--) {
                     if (imgGrid[i][i2].getImage()
-                        .equals(blueEX.getImage())) {
+                        .equals(player2EX.getImage())) {
                         sameFound = true;
                         break;
-                    } //if closing blue found
+                    } //if closing player2 found
                     if (imgGrid[i][i2].getImage()
                         .equals(emptyEX.getImage()) ||
                         imgGrid[i][i2].getImage().equals(potEX.getImage())) {
                         sameFound = false;
                         break;
                     } //if delimiter space found
-                } //for searching for second blue to confirm placement
-            } //if red found adjacent
-        } //if current turn is blue (check for red then blue)
+                } //for searching for second player2 to confirm placement
+            } //if player1 found adjacent
+        } //if current turn is player2 (check for player1 then player2)
         return sameFound && oppFound;
     } //checkUpLeft
 
@@ -735,44 +728,44 @@ public class Reversi extends Application {
         int row = GridPane.getRowIndex(iv);
         boolean oppFound = false;
         boolean sameFound = false;
-        if (currentColor.getText().equals("red")) {
+        if (currentTurn.getText().equals("Player 1")) {
             if (imgGrid[col - 1][row + 1].getImage()
-                .equals(blueEX.getImage())) {
+                .equals(player2EX.getImage())) {
                 oppFound = true;
                 for (int i = col - 1, i2 = row + 1; i >= 0 && i2 <= 7; i--, i2++) {
                     if (imgGrid[i][i2].getImage()
-                        .equals(redEX.getImage())) {
+                        .equals(player1EX.getImage())) {
                         sameFound = true;
                         break;
-                    } //if closing red found
+                    } //if closing player1 found
                     if (imgGrid[i][i2].getImage()
                         .equals(emptyEX.getImage()) ||
                         imgGrid[i][i2].getImage().equals(potEX.getImage())) {
                         sameFound = false;
                         break;
                     } //if delimiter space found
-                } //for searching for second red to confirm placement
-            } //if blue found adjacent
-        } //if current turn red (check for blue then red)
-        if (currentColor.getText().equals("blue")) {
+                } //for searching for second player1 to confirm placement
+            } //if player2 found adjacent
+        } //if current turn player1 (check for player2 then player1)
+        if (currentTurn.getText().equals("Player 2")) {
             if (imgGrid[col - 1][row + 1].getImage()
-                .equals(redEX.getImage())) {
+                .equals(player1EX.getImage())) {
                 oppFound = true;
                 for (int i = col - 1, i2 = row + 1; i >= 0 && i2 <= 7; i--, i2++) {
                     if (imgGrid[i][i2].getImage()
-                        .equals(blueEX.getImage())) {
+                        .equals(player2EX.getImage())) {
                         sameFound = true;
                         break;
-                    } //if closing blue found
+                    } //if closing player2 found
                     if (imgGrid[i][i2].getImage()
                         .equals(emptyEX.getImage()) ||
                         imgGrid[i][i2].getImage().equals(potEX.getImage())) {
                         sameFound = false;
                         break;
                     } //if delimiter space found
-                } //for searching for second blue to confirm placement
-            } //if red found adjacent
-        } //if current turn blue (check for red then blue)
+                } //for searching for second player2 to confirm placement
+            } //if player1 found adjacent
+        } //if current turn player2 (check for player1 then player2)
         return sameFound && oppFound;
     } //checkDownLeft
 
@@ -826,32 +819,32 @@ public class Reversi extends Application {
     private void reverseUp(ImageView iv) {
         int col = GridPane.getColumnIndex(iv);
         int row = GridPane.getRowIndex(iv);
-        if (currentColor.getText().equals("red")) {
+        if (currentTurn.getText().equals("Player 1")) {
             for (int i = col, i2 = row - 1; i2 >= 0; i2--) {
                 if (imgGrid[i][i2].getImage()
-                    .equals(blueEX.getImage())) {
-                    imgGrid[i][i2].setImage(redS);
+                    .equals(player2EX.getImage())) {
+                    imgGrid[i][i2].setImage(player1S);
                     continue;
-                } //if blue is found for reversal
+                } //if player2 is found for reversal
                 if (imgGrid[i][i2].getImage()
-                    .equals(redEX.getImage())) {
+                    .equals(player1EX.getImage())) {
                     break;
-                } //if red found to cease reversal
-            } //for reversing blues to reds
-        } //if red's turn
-        if (currentColor.getText().equals("blue")) {
+                } //if player1 found to cease reversal
+            } //for reversing player2s to player1s
+        } //if player1's turn
+        if (currentTurn.getText().equals("Player 2")) {
             for (int i = col, i2 = row - 1; i2 >= 0; i2--) {
                 if (imgGrid[i][i2].getImage()
-                    .equals(redEX.getImage())) {
-                    imgGrid[i][i2].setImage(blueS);
+                    .equals(player1EX.getImage())) {
+                    imgGrid[i][i2].setImage(player2S);
                     continue;
-                } //if red found for reversal
+                } //if player1 found for reversal
                 if (imgGrid[i][i2].getImage()
-                    .equals(blueEX.getImage())) {
+                    .equals(player2EX.getImage())) {
                     break;
-                } //if blue found to cease reversal
-            } //for reversing reds to blues
-        } //if blue's turn
+                } //if player2 found to cease reversal
+            } //for reversing player1s to player2s
+        } //if player2's turn
         
     } //reverseUp
 
@@ -865,32 +858,32 @@ public class Reversi extends Application {
     private void reverseDown(ImageView iv) {
         int col = GridPane.getColumnIndex(iv);
         int row = GridPane.getRowIndex(iv);
-        if (currentColor.getText().equals("red")) {
+        if (currentTurn.getText().equals("Player 1")) {
             for (int i = col, i2 = row + 1; i2 <= 7; i2++) {
                 if (imgGrid[i][i2].getImage()
-                    .equals(blueEX.getImage())) {
-                    imgGrid[i][i2].setImage(redS);
+                    .equals(player2EX.getImage())) {
+                    imgGrid[i][i2].setImage(player1S);
                     continue;
-                } //if blue found for reversal
+                } //if player2 found for reversal
                 if (imgGrid[i][i2].getImage()
-                    .equals(redEX.getImage())) {
+                    .equals(player1EX.getImage())) {
                     break;
-                } // if red found to cease reversal
-            } //for reversing blues to reds
-        } //if red's turn
-        if (currentColor.getText().equals("blue")) {
+                } // if player1 found to cease reversal
+            } //for reversing player2s to player1s
+        } //if player1's turn
+        if (currentTurn.getText().equals("Player 2")) {
             for (int i = col, i2 = row + 1; i2 <= 7; i2++) {
                 if (imgGrid[i][i2].getImage()
-                    .equals(redEX.getImage())) {
-                    imgGrid[i][i2].setImage(blueS);
+                    .equals(player1EX.getImage())) {
+                    imgGrid[i][i2].setImage(player2S);
                     continue;
-                } //if red found for reversal
+                } //if player1 found for reversal
                 if (imgGrid[i][i2].getImage()
-                    .equals(blueEX.getImage())) {
+                    .equals(player2EX.getImage())) {
                     break;
-                } //if blue found to cease reversal
-            } //for reversing reds to blues
-        } //if blue's turn
+                } //if player2 found to cease reversal
+            } //for reversing player1s to player2s
+        } //if player2's turn
     } //reverseDown
 
     /**
@@ -903,32 +896,32 @@ public class Reversi extends Application {
     private void reverseLeft(ImageView iv) {
         int col = GridPane.getColumnIndex(iv);
         int row = GridPane.getRowIndex(iv);
-        if (currentColor.getText().equals("red")) {
+        if (currentTurn.getText().equals("Player 1")) {
             for (int i = col - 1, i2 = row; i >= 0; i--) {
                 if (imgGrid[i][i2].getImage()
-                    .equals(blueEX.getImage())) {
-                    imgGrid[i][i2].setImage(redS);
+                    .equals(player2EX.getImage())) {
+                    imgGrid[i][i2].setImage(player1S);
                     continue;
-                } //if blue found for reversal
+                } //if player2 found for reversal
                 if (imgGrid[i][i2].getImage()
-                    .equals(redEX.getImage())) {
+                    .equals(player1EX.getImage())) {
                     break;
-                } //if red found to cease reversal
-            } //for reversing blues to reds
-        } //if red's turn
-        if (currentColor.getText().equals("blue")) {
+                } //if player1 found to cease reversal
+            } //for reversing player2s to player1s
+        } //if player1's turn
+        if (currentTurn.getText().equals("Player 2")) {
             for (int i = col - 1, i2 = row; i >= 0; i--) {
                 if (imgGrid[i][i2].getImage()
-                    .equals(redEX.getImage())) {
-                    imgGrid[i][i2].setImage(blueS);
+                    .equals(player1EX.getImage())) {
+                    imgGrid[i][i2].setImage(player2S);
                     continue;
-                } //if red found for reversal
+                } //if player1 found for reversal
                 if (imgGrid[i][i2].getImage()
-                    .equals(blueEX.getImage())) {
+                    .equals(player2EX.getImage())) {
                     break;
                 } //if whtie found to cease reversal
-            } //for reversing reds to blues
-        } //if blue's turn
+            } //for reversing player1s to player2s
+        } //if player2's turn
     } //reverseLeft
 
     /**
@@ -941,32 +934,32 @@ public class Reversi extends Application {
     private void reverseRight(ImageView iv) {
         int col = GridPane.getColumnIndex(iv);
         int row = GridPane.getRowIndex(iv);
-        if (currentColor.getText().equals("red")) {
+        if (currentTurn.getText().equals("Player 1")) {
             for (int i = col + 1, i2 = row; i <= 7; i++) {
                 if (imgGrid[i][i2].getImage()
-                    .equals(blueEX.getImage())) {
-                    imgGrid[i][i2].setImage(redS);
+                    .equals(player2EX.getImage())) {
+                    imgGrid[i][i2].setImage(player1S);
                     continue;
-                } //if blue found for reversal
+                } //if player2 found for reversal
                 if (imgGrid[i][i2].getImage()
-                    .equals(redEX.getImage())) {
+                    .equals(player1EX.getImage())) {
                     break;
-                } //if red found to cease reversal
-            } //for reversing blues to reds
-        } //if red's turn
-        if (currentColor.getText().equals("blue")) {
+                } //if player1 found to cease reversal
+            } //for reversing player2s to player1s
+        } //if player1's turn
+        if (currentTurn.getText().equals("Player 2")) {
             for (int i = col + 1, i2 = row; i <= 7; i++) {
                 if (imgGrid[i][i2].getImage()
-                    .equals(redEX.getImage())) {
-                    imgGrid[i][i2].setImage(blueS);
+                    .equals(player1EX.getImage())) {
+                    imgGrid[i][i2].setImage(player2S);
                     continue;
-                } //if red found for reversal
+                } //if player1 found for reversal
                 if (imgGrid[i][i2].getImage()
-                    .equals(blueEX.getImage())) {
+                    .equals(player2EX.getImage())) {
                     break;
-                } //if blue found to cease reversal
-            } //for reversing reds to blues
-        } //if blue's turn
+                } //if player2 found to cease reversal
+            } //for reversing player1s to player2s
+        } //if player2's turn
     } //reverseRight
 
     /**
@@ -979,32 +972,32 @@ public class Reversi extends Application {
     private void reverseUpRight(ImageView iv) {
         int col = GridPane.getColumnIndex(iv);
         int row = GridPane.getRowIndex(iv);
-        if (currentColor.getText().equals("red")) {
+        if (currentTurn.getText().equals("Player 1")) {
             for (int i = col + 1, i2 = row - 1; i <= 7 && i2 >= 0; i++, i2--) {
                 if (imgGrid[i][i2].getImage()
-                    .equals(blueEX.getImage())) {
-                    imgGrid[i][i2].setImage(redS);
+                    .equals(player2EX.getImage())) {
+                    imgGrid[i][i2].setImage(player1S);
                     continue;
-                } //if blue found for reversal
+                } //if player2 found for reversal
                 if (imgGrid[i][i2].getImage()
-                    .equals(redEX.getImage())) {
+                    .equals(player1EX.getImage())) {
                     break;
-                } //if red found to cease reversal
-            } //for reversing blues to reds
-        } //if red's turn
-        if (currentColor.getText().equals("blue")) {
+                } //if player1 found to cease reversal
+            } //for reversing player2s to player1s
+        } //if player1's turn
+        if (currentTurn.getText().equals("Player 2")) {
             for (int i = col + 1, i2 = row - 1; i <= 7 && i2 >= 0; i++, i2--) {
                 if (imgGrid[i][i2].getImage()
-                    .equals(redEX.getImage())) {
-                    imgGrid[i][i2].setImage(blueS);
+                    .equals(player1EX.getImage())) {
+                    imgGrid[i][i2].setImage(player2S);
                     continue;
-                } //if red found for reversal
+                } //if player1 found for reversal
                 if (imgGrid[i][i2].getImage()
-                    .equals(blueEX.getImage())) {
+                    .equals(player2EX.getImage())) {
                     break;
-                } //if blue found to cease reversal
-            } //for reversing reds to blues
-        } //if blue's turn
+                } //if player2 found to cease reversal
+            } //for reversing player1s to player2s
+        } //if player2's turn
     } //reverseUpRight
 
     /**
@@ -1017,32 +1010,32 @@ public class Reversi extends Application {
     private void reverseDownRight(ImageView iv) {
         int col = GridPane.getColumnIndex(iv);
         int row = GridPane.getRowIndex(iv);
-        if (currentColor.getText().equals("red")) {
+        if (currentTurn.getText().equals("Player 1")) {
             for (int i = col + 1, i2 = row + 1; i <= 7 && i2 <= 7; i++, i2++) {
                 if (imgGrid[i][i2].getImage()
-                    .equals(blueEX.getImage())) {
-                    imgGrid[i][i2].setImage(redS);
+                    .equals(player2EX.getImage())) {
+                    imgGrid[i][i2].setImage(player1S);
                     continue;
-                } //if blue found for reversal
+                } //if player2 found for reversal
                 if (imgGrid[i][i2].getImage()
-                    .equals(redEX.getImage())) {
+                    .equals(player1EX.getImage())) {
                     break;
-                } //if red found to cease reversal
-            } //for reversing blues to reds
-        } //if red's turn
-        if (currentColor.getText().equals("blue")) {
+                } //if player1 found to cease reversal
+            } //for reversing player2s to player1s
+        } //if player1's turn
+        if (currentTurn.getText().equals("Player 2")) {
             for (int i = col + 1, i2 = row + 1; i <= 7 && i2 <= 7; i++, i2++) {
                 if (imgGrid[i][i2].getImage()
-                    .equals(redEX.getImage())) {
-                    imgGrid[i][i2].setImage(blueS);
+                    .equals(player1EX.getImage())) {
+                    imgGrid[i][i2].setImage(player2S);
                     continue;
-                } //if red found for reversal
+                } //if player1 found for reversal
                 if (imgGrid[i][i2].getImage()
-                    .equals(blueEX.getImage())) {
+                    .equals(player2EX.getImage())) {
                     break;
-                } //if blue found to cease reversal
-            } //for reversing reds to blues
-        } //if blue's turn
+                } //if player2 found to cease reversal
+            } //for reversing player1s to player2s
+        } //if player2's turn
     } //reverseDownRight
 
     /**
@@ -1055,32 +1048,32 @@ public class Reversi extends Application {
     private void reverseUpLeft(ImageView iv) {
         int col = GridPane.getColumnIndex(iv);
         int row = GridPane.getRowIndex(iv);
-        if (currentColor.getText().equals("red")) {
+        if (currentTurn.getText().equals("Player 1")) {
             for (int i = col - 1, i2 = row - 1; i >= 0 && i2 >= 0; i--, i2--) {
                 if (imgGrid[i][i2].getImage()
-                    .equals(blueEX.getImage())) {
-                    imgGrid[i][i2].setImage(redS);
+                    .equals(player2EX.getImage())) {
+                    imgGrid[i][i2].setImage(player1S);
                     continue;
-                } //if blue found for reversal
+                } //if player2 found for reversal
                 if (imgGrid[i][i2].getImage()
-                    .equals(redEX.getImage())) {
+                    .equals(player1EX.getImage())) {
                     break;
-                } //if red found to cease reversal
-            } //for reversing blues to reds
-        } //if red's turn
-        if (currentColor.getText().equals("blue")) {
+                } //if player1 found to cease reversal
+            } //for reversing player2s to player1s
+        } //if player1's turn
+        if (currentTurn.getText().equals("Player 2")) {
             for (int i = col - 1, i2 = row - 1; i >= 0 && i2 >= 0; i--, i2--) {
                 if (imgGrid[i][i2].getImage()
-                    .equals(redEX.getImage())) {
-                    imgGrid[i][i2].setImage(blueS);
+                    .equals(player1EX.getImage())) {
+                    imgGrid[i][i2].setImage(player2S);
                     continue;
-                } //if red found for reversal
+                } //if player1 found for reversal
                 if (imgGrid[i][i2].getImage()
-                    .equals(blueEX.getImage())) {
+                    .equals(player2EX.getImage())) {
                     break;
-                } //if blue found to cease reversal
-            } //for reversing reds to blues
-        } //if blue's turn
+                } //if player2 found to cease reversal
+            } //for reversing player1s to player2s
+        } //if player2's turn
     } //reverseUpLeft
 
     /**
@@ -1093,32 +1086,32 @@ public class Reversi extends Application {
     private void reverseDownLeft(ImageView iv) {
         int col = GridPane.getColumnIndex(iv);
         int row = GridPane.getRowIndex(iv);
-        if (currentColor.getText().equals("red")) {
+        if (currentTurn.getText().equals("Player 1")) {
             for (int i = col - 1, i2 = row + 1; i >= 0 && i2 <= 7; i--, i2++) {
                 if (imgGrid[i][i2].getImage()
-                    .equals(blueEX.getImage())) {
-                    imgGrid[i][i2].setImage(redS);
+                    .equals(player2EX.getImage())) {
+                    imgGrid[i][i2].setImage(player1S);
                     continue;
-                } //if blue found for reversal
+                } //if player2 found for reversal
                 if (imgGrid[i][i2].getImage()
-                    .equals(redEX.getImage())) {
+                    .equals(player1EX.getImage())) {
                     break;
-                } //if red found to cease reversal
-            } //for reversing blues to reds
-        } //if red's turn
-        if (currentColor.getText().equals("blue")) {
+                } //if player1 found to cease reversal
+            } //for reversing player2s to player1s
+        } //if player1's turn
+        if (currentTurn.getText().equals("Player 2")) {
             for (int i = col - 1, i2 = row + 1; i >= 0 && i2 <= 7; i--, i2++) {
                 if (imgGrid[i][i2].getImage()
-                    .equals(redEX.getImage())) {
-                    imgGrid[i][i2].setImage(blueS);
+                    .equals(player1EX.getImage())) {
+                    imgGrid[i][i2].setImage(player2S);
                     continue;
-                } //if red found for reversal
+                } //if player1 found for reversal
                 if (imgGrid[i][i2].getImage()
-                    .equals(blueEX.getImage())) {
+                    .equals(player2EX.getImage())) {
                     break;
-                } //if blue found to cease reversal
-            } //for reversing reds to blues
-        } //if blue's turn
+                } //if player2 found to cease reversal
+            } //for reversing player1s to player2s
+        } //if player2's turn
         
     } //reverseDownLeft
 
@@ -1346,39 +1339,36 @@ public class Reversi extends Application {
     
     private void numOfValidMoves() {
         
-        if (currentColor.getText().equals("red")) {
-            int validReds = 0;
+        if (currentTurn.getText().equals("Player 1")) {
+            int validP1s = 0;
             for (int i = 0; i <= 7; i++) {
                 for (int j = 0; j <= 7; j++) {
                     if (checkValidPlacement(imgGrid[i][j]) == true) {
-                        validReds++;
-                    } //if a given space is valid for red player
+                        validP1s++;
+                    } //if a given space is valid for player1 player
                 } //inner for
             } //outer for
-            if (validReds == 0) {
-                insuffMovesRed.showAndWait();
-                System.out.println("insuffMovesRed");
+            if (validP1s == 0) {
+                insuffMovesP1.showAndWait();
+                //System.out.println("insuffMovesP1");
                 determineEnd();
-            } //if no valid moves for red
-
-        } //if it is red's turn
-        if (currentColor.getText().equals("blue")) {
-            int validBlues = 0;
+            } //if no valid moves for player1
+        } //if it is player1's turn
+        if (currentTurn.getText().equals("Player 2")) {
+            int validP2s = 0;
             for (int i = 0; i <= 7; i++) {
                 for (int j = 0; j <= 7; j++) {
                     if (checkValidPlacement(imgGrid[i][j]) == true) {
-                        validBlues++;
-                    } //if a given space is valid for blue player
+                        validP2s++;
+                    } //if a given space is valid for player2 player
                 } //inner for
             } //outer for
-            if (validBlues == 0) {
-                insuffMovesBlue.showAndWait();
-                System.out.println("insuffMovesBlue");
+            if (validP2s == 0) {
+                insuffMovesP2.showAndWait();
+               // System.out.println("insuffMovesP2");
                 determineEnd();
-            } //if no valid moves for blue
-
-        } //if it is blue's turn
-        
+            } //if no valid moves for player2
+        } //if it is player2's turn
     } //numOfValidMoves
 
     /**
@@ -1390,28 +1380,26 @@ public class Reversi extends Application {
     
     private void determineEnd() {
 
-        if (redCount > blueCount) {
-
-            redWins.showAndWait();
+        if (player1Count > player2Count) {
+            player1Wins.showAndWait();
             theStage.close();
             System.exit(0);
-        } //if red has higher score
-        if (redCount < blueCount) {
-            blueWins.showAndWait();
+        } //if player1 has higher score
+        if (player1Count < player2Count) {
+            player2Wins.showAndWait();
             theStage.close();
             System.exit(0);
-        } //if blue has higher score
-        if (redCount == blueCount) {
+        } //if player2 has higher score
+        if (player1Count == player2Count) {
             draw.showAndWait();
             theStage.close();
             System.exit(0);
         } //if draw
-
     } //determineEnd
 
     /**
      * This method sets up necessary components of
-     * the {@code Scene} graph, and reduces the bulk of the
+     * the {@code Scene} graph, and player1uces the bulk of the
      * constructor.
      */
     
@@ -1432,9 +1420,15 @@ public class Reversi extends Application {
         exitButton.setTextFill(Color.ANTIQUEWHITE);
         //exitButton.setStyle("-fx-background-color: #000000");
         exitButton.setStyle("-fx-background-color: #000000; -fx-border-color: #ff0000");
-        redTracker.setFill(Color.DARKRED);
-        blueTracker.setFill(Color.DODGERBLUE);
-        topMenu.getChildren().addAll(exitButton, redTracker, blueTracker);
+        player1Tracker.setFill(Color.DARKRED);
+        player2Tracker.setFill(Color.DODGERBLUE);
+        topMenu.getChildren().addAll(exitButton, player1Tracker, player2Tracker);
+
+        potentialToggle = event -> togglePotentials();
+        potentialSpaceToggleButton = new Button("Toggle Valid Spaces");
+        potentialSpaceToggleButton.setOnAction(potentialToggle);
+        potentialSpaceToggleButton.setTextFill(Color.ANTIQUEWHITE);
+        potentialSpaceToggleButton.setStyle("-fx-background-color: #000000; -fx-border-color: #ff0000");
         
         turnTracker = new HBox();
         turnTracker.setBackground(filler);
@@ -1445,11 +1439,10 @@ public class Reversi extends Application {
         bottom = new HBox(405);
         bottom.setBackground(filler);
         colorIndicator.setFill(Color.ANTIQUEWHITE);
-        locationIndicator.setFill(Color.ANTIQUEWHITE);
         colorIndicator.setUnderline(true);
         colorIndicator.setFill(Color.DARKRED);
         bottom.getChildren().add(colorIndicator);
-        bottom.getChildren().add(locationIndicator);
+        bottom.getChildren().add(potentialSpaceToggleButton);
 
         root = new VBox();
     } //setUpOther
@@ -1468,6 +1461,17 @@ public class Reversi extends Application {
         theStage.show();
         theStage.sizeToScene();
     } //setUpScene
+
+    private void togglePotentials() {
+        System.out.println("Toggling potentials");
+        if (potentialSpaceVisible) {
+            potentialSpaceVisible = false;
+            hidePotentials(potentialSpaceVisible);
+        } else {
+            potentialSpaceVisible = true;
+            showPotentials();
+        }
+    }
     
     /**
      * This method iterates through the game board and changes
@@ -1493,9 +1497,11 @@ public class Reversi extends Application {
      * This method's primary purpose is to allow for the resetting of potential
      * spaces as the specific ImageViews that are potential moves are different for
      * each turn.
+     * The {@code boolean} parameter determines whether the method calls {@code showPotentials}
+     * after it has hidden all potentials.
      */
     
-    private void hidePotentials() {
+    private void hidePotentials(boolean visible) {
     	for (int i = 0; i < 8; i++) {
     		for (int j = 0; j < 8; j++) {
     			if (imgGrid[i][j].getImage() == potEX.getImage()) {
@@ -1508,11 +1514,11 @@ public class Reversi extends Application {
         	} catch (InterruptedException e) {
         		System.out.println(e);
         	} //try-catch for delay
-    	showPotentials();
+        if (visible) {showPotentials();}
     } //hidePotentials
     
     /**
-     * This method simulates play by a second player (blue) by using a random-select AI
+     * This method simulates play by a second player (player2) by using a random-select AI
      * to play an {@code ImageView} on the game board, just like when a user selects a space.
      * If the AI chooses an invalid space, the method continues execution until a valid space is
      * chosen and gameplay can continue.
@@ -1521,23 +1527,28 @@ public class Reversi extends Application {
     private void botPlay() {
     		Random rando = new Random();
     		boolean validChosen = false;
+            int[] cornerSpace = collectCorners(rando);
     		while (!validChosen) {
     			int row = rando.nextInt(8);
     			int col = rando.nextInt(8);
+                if (cornerSpace.length == 2) {
+                    row = cornerSpace[0];
+                    col = cornerSpace[1];
+                }
     			if (checkValidPlacement(imgGrid[row][col])) {
     				 validChosen = true;
     				 clicked = false;
     				 reverseColors(imgGrid[row][col]);
     	             setImage(imgGrid[row][col]);
-    	             if (currentColor.getText().equals("blue")) {
-    	                 countReds();
-    	                 countBlues();
-    	             } //if red played
+    	             if (currentTurn.getText().equals("Player 2")) {
+    	                 countPlayer1();
+    	                 countPlayer2();
+    	             } //if player1 played
     	             
-    	             if (currentColor.getText().equals("red")) {
-    	                 countBlues();
-    	                 countReds();
-    	             } //if blue played
+    	             if (currentTurn.getText().equals("Player 1")) {
+    	                 countPlayer2();
+    	                 countPlayer1();
+    	             } //if player2 played
     	             
     	             numOfValidMoves();
     	             
@@ -1547,8 +1558,40 @@ public class Reversi extends Application {
     			} //if randomly-selected space is a valid move
     			else continue;
     		} //while
-    	hidePotentials();
+    	hidePotentials(potentialSpaceVisible);
     	status.setText("Player's turn");
     } //botPlay
-    
+
+    /**
+     * This method is called by the AI's random select to grab a random corner space's coordinates,
+     * so long as that corner space is a valid move for the AI. This is because in Reversi/Othello,
+     * corner spaces cannot be reversed, so if the AI can target them specifically it will make the game
+     * more challenging for the player.
+     * @param rando a Random object for choosing a random corner space (if applicable)
+     * @return a two-element int array containing corner space coordinates (if applicable)
+     */
+    private int[] collectCorners(Random rando) {
+        Vector<int[]> resultCoordinates = new Vector<>();
+        if (checkValidPlacement(imgGrid[0][0])) { // valid placement in top-left corner
+            resultCoordinates.add(new int[]{0, 0});
+        }
+
+        if (checkValidPlacement(imgGrid[0][7])) { // valid placement in top-right corner
+            resultCoordinates.add(new int[]{0, 7});
+        }
+
+        if (checkValidPlacement(imgGrid[7][0])) { // valid placement in bottom-left corner
+            resultCoordinates.add(new int[]{7, 0});
+        }
+
+        if (checkValidPlacement(imgGrid[7][7])) { // valid placement in bottom-right corner
+            resultCoordinates.add(new int[]{7, 7});
+        }
+
+        if (resultCoordinates.size() > 0) {
+            return resultCoordinates.elementAt(rando.nextInt(resultCoordinates.size()));
+        }
+
+        return new int[]{};
+    }
 } //Reversi
