@@ -9,4 +9,3 @@ Additional features I would like to add eventually include:
 - [ ] AI improvements for increased difficulty
 - [ ] Option to change game's color scheme mid-match
 - [ ] Option to save the game and return to it later
-- [ ] Remote multiplayer via sockets
