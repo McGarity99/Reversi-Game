@@ -1437,6 +1437,8 @@ public class Reversi extends Application {
         turnTracker.getChildren().add(status);
         turnTracker.setAlignment(Pos.BASELINE_CENTER);
 
+        pSpaceToggle.setFitWidth(50);
+        pSpaceToggle.setFitHeight(50);
         pSpaceToggle.setOnMouseClicked(event -> {
             togglePotentials();
         });
