@@ -76,6 +76,7 @@ public class Reversi extends Application {
     ImageView emptyEX = new ImageView(emptyS);
     ImageView potEX = new ImageView(potenS);
     ImageView theLogo = new ImageView(reversiLogo);
+    ImageView pSpaceToggle = new ImageView(potenS);
     
     Reversi anotherGame;
     Scene mainScene;
@@ -1436,13 +1437,17 @@ public class Reversi extends Application {
         turnTracker.getChildren().add(status);
         turnTracker.setAlignment(Pos.BASELINE_CENTER);
 
+        pSpaceToggle.setOnMouseClicked(event -> {
+            togglePotentials();
+        });
+
         bottom = new HBox(405);
         bottom.setBackground(filler);
         colorIndicator.setFill(Color.ANTIQUEWHITE);
         colorIndicator.setUnderline(true);
         colorIndicator.setFill(Color.DARKRED);
-        bottom.getChildren().add(colorIndicator);
-        bottom.getChildren().add(potentialSpaceToggleButton);
+        bottom.getChildren().addAll(colorIndicator, pSpaceToggle);
+        //bottom.getChildren().add(potentialSpaceToggleButton);
 
         root = new VBox();
     } //setUpOther
@@ -1467,9 +1472,11 @@ public class Reversi extends Application {
         if (potentialSpaceVisible) {
             potentialSpaceVisible = false;
             hidePotentials(potentialSpaceVisible);
+            pSpaceToggle.setImage(emptyS);
         } else {
             potentialSpaceVisible = true;
             showPotentials();
+            pSpaceToggle.setImage(potenS);
         }
     }
     
