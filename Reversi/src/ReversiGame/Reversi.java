@@ -1,3 +1,5 @@
+package ReversiGame;
+
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.scene.layout.HBox;
@@ -8,6 +10,7 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.Image;
 import javafx.scene.text.Text;
+import javafx.scene.text.Font;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -22,6 +25,7 @@ import javafx.application.Platform;
 import java.util.Optional;
 import javafx.application.Application;
 import java.util.Vector;
+import javafx.scene.control.ComboBox;
 
 /**
  * This Reversi class represents a
@@ -29,22 +33,33 @@ import java.util.Vector;
  */
 
 public class Reversi extends Application {
+    ColorPackage cpkg;
 	EventHandler<ActionEvent> exit;
     EventHandler<ActionEvent> potentialToggle;
 	HBox logoBar;
     HBox topMenu;
+    HBox colorPickerBox;
     HBox turnTracker;
     Button exitButton;
     Button potentialSpaceToggleButton;
     HBox bottom;
     VBox root;
+    ComboBox<String> p1ColorSelect = new ComboBox<>();
+    ComboBox<String> p2ColorSelect = new ComboBox<>();
+    Vector<String> validColorStrings = new Vector<>();
     
-
+    PieceColor p1Color = PieceColor.WHITE;
+    PieceColor p2Color = PieceColor.BLACK;
+    ColorPackage p1ColorPackage = new ColorPackage(p1Color); // contains image filename & color string
+    ColorPackage p2ColorPackage = new ColorPackage(p2Color); // contains image filename & color string
+    
     Image potenS = new Image("resources/potentialSpace.JPG");
     Image emptyS = new Image("resources/emptySpace.JPG");
-    Image player1S = new Image("resources/redSpace.JPG");
-    Image player2S = new Image("resources/blueSpace.JPG");
-    Image reversiLogo = new Image("resources/reversiLogo.JPG");
+    Image player1S = new Image(p1ColorPackage.getColorStrings()[0]);
+    Image player2S = new Image(p2ColorPackage.getColorStrings()[0]);
+    Image reversiLogo = new Image("resources/newReversiLogo.png");
+
+
     ButtonType exitDialog = new ButtonType("OK");
     ButtonType yesAI = new ButtonType("Yes");
     ButtonType noAI = new ButtonType("No");
@@ -70,6 +85,8 @@ public class Reversi extends Application {
     Text currentTurn = new Text("Player 1");	//player1 player always goes first
     Text colorIndicator = new Text("Current Turn: " + currentTurn.getText());
     Text status = new Text("Player's turn");
+    Text player1Color = new Text("Player 1 Color:");
+    Text player2Color = new Text("Player 2 Color");
     ImageView[][] imgGrid = new ImageView[8][8];
     ImageView player2EX = new ImageView(player2S);
     ImageView player1EX = new ImageView(player1S);
@@ -195,14 +212,14 @@ public class Reversi extends Application {
             iv.setImage(player1S);
             currentTurn.setText("Player 2");
             colorIndicator.setText("Current turn: " + currentTurn.getText());
-            colorIndicator.setFill(Color.DODGERBLUE);
+            colorIndicator.setFill(p2ColorPackage.getColor());
             return;
         } //if player1 when called, changing to player2
         if (currentTurn.getText().equals("Player 2")) {
             iv.setImage(player2S);
             currentTurn.setText("Player 1");
             colorIndicator.setText("Current turn: " + currentTurn.getText());
-            colorIndicator.setFill(Color.DARKRED);
+            colorIndicator.setFill(p1ColorPackage.getColor());
             return;
         } //if player2 when called, changing to player1
     } //setImage
@@ -1412,6 +1429,15 @@ public class Reversi extends Application {
     	theLogo.setFitHeight(80);
     	logoBar.getChildren().add(theLogo);
     	logoBar.setAlignment(Pos.BASELINE_CENTER);
+
+        colorPickerBox = new HBox(10);
+        colorPickerBox.setBackground(filler);
+        validColorStrings = getValidColorStrings();
+        p1ColorSelect.getItems().addAll(validColorStrings);
+        p2ColorSelect.getItems().addAll(validColorStrings);
+        player1Color.setFill(Color.ANTIQUEWHITE);
+        player2Color.setFill(Color.ANTIQUEWHITE);
+        colorPickerBox.getChildren().addAll(player1Color, p1ColorSelect, player2Color, p2ColorSelect);
     	
         topMenu = new HBox(12);
         topMenu.setBackground(filler);
@@ -1423,13 +1449,9 @@ public class Reversi extends Application {
         exitButton.setStyle("-fx-background-color: #000000; -fx-border-color: #ff0000");
         player1Tracker.setFill(Color.DARKRED);
         player2Tracker.setFill(Color.DODGERBLUE);
-        topMenu.getChildren().addAll(exitButton, player1Tracker, player2Tracker);
+        topMenu.getChildren().addAll(exitButton, player1Tracker, player2Tracker, colorPickerBox);
 
         potentialToggle = event -> togglePotentials();
-        potentialSpaceToggleButton = new Button("Toggle Valid Spaces");
-        potentialSpaceToggleButton.setOnAction(potentialToggle);
-        potentialSpaceToggleButton.setTextFill(Color.ANTIQUEWHITE);
-        potentialSpaceToggleButton.setStyle("-fx-background-color: #000000; -fx-border-color: #ff0000");
         
         turnTracker = new HBox();
         turnTracker.setBackground(filler);
@@ -1443,14 +1465,15 @@ public class Reversi extends Application {
             togglePotentials();
         });
 
-        bottom = new HBox(405);
+        bottom = new HBox(450);
         bottom.setBackground(filler);
+        colorIndicator.setFont(new Font(12));
         colorIndicator.setFill(Color.ANTIQUEWHITE);
         colorIndicator.setUnderline(true);
         colorIndicator.setFill(Color.DARKRED);
+        colorIndicator.setStroke(Color.ANTIQUEWHITE);
+        colorIndicator.setStrokeWidth(0.25);
         bottom.getChildren().addAll(colorIndicator, pSpaceToggle);
-        //bottom.getChildren().add(potentialSpaceToggleButton);
-
         root = new VBox();
     } //setUpOther
 
@@ -1470,7 +1493,6 @@ public class Reversi extends Application {
     } //setUpScene
 
     private void togglePotentials() {
-        System.out.println("Toggling potentials");
         if (potentialSpaceVisible) {
             potentialSpaceVisible = false;
             hidePotentials(potentialSpaceVisible);
@@ -1584,23 +1606,39 @@ public class Reversi extends Application {
         if (checkValidPlacement(imgGrid[0][0])) { // valid placement in top-left corner
             resultCoordinates.add(new int[]{0, 0});
         }
-
         if (checkValidPlacement(imgGrid[0][7])) { // valid placement in top-right corner
             resultCoordinates.add(new int[]{0, 7});
         }
-
         if (checkValidPlacement(imgGrid[7][0])) { // valid placement in bottom-left corner
             resultCoordinates.add(new int[]{7, 0});
         }
-
         if (checkValidPlacement(imgGrid[7][7])) { // valid placement in bottom-right corner
             resultCoordinates.add(new int[]{7, 7});
         }
-
         if (resultCoordinates.size() > 0) {
             return resultCoordinates.elementAt(rando.nextInt(resultCoordinates.size()));
         }
-
         return new int[]{};
     }
+
+    /**
+     * Given the current color of both player 1 and player 2, determine which colors are available
+     * to switch to from the color selection dialogs.
+     * @return a Vector<String> of valid color strings
+     */
+    private Vector<String> getValidColorStrings() {
+        Vector<String> validStrings = new Vector<>();
+        String p1String = p1ColorPackage.getColorStrings()[1];
+        String p2String = p2ColorPackage.getColorStrings()[1];
+        for (PieceColor pc : PieceColor.values()) {
+            ColorPackage tmp = new ColorPackage(pc);
+            String str = tmp.getColorStrings()[1];
+            if ((!str.equals(p1String)) && (!str.equals(p2String))) {
+                validStrings.add(str);
+            }
+        }
+        return validStrings;
+    }
+
+    
 } //Reversi
