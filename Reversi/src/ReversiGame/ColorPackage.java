@@ -25,52 +25,52 @@ public class ColorPackage {
     private void setFileName(PieceColor pc) {
         switch (pc) {
             case ALPINE:
-                this.fileName = "../resources/alpineSpace.jpg";
+                this.fileName = "resources/alpineSpace.jpg";
                 this.colorStr = "Alpine";
                 this.color = Color.DARKGREEN;
                 break;
             case BABYBLUE:
-                this.fileName = "../resources/babyBlueSpace.jpg";
+                this.fileName = "resources/babyBlueSpace.jpg";
                 this.colorStr = "Baby Blue";
                 this.color = Color.LIGHTBLUE;
                 break;
             case BLACK:
-                this.fileName = "../resources/blackSpace.jpg";
+                this.fileName = "resources/blackSpace.jpg";
                 this.colorStr = "Black";
                 this.color = Color.BLACK;
                 break;
             case BLUE:
-                this.fileName = "../resources/blueSpace.JPG";
+                this.fileName = "resources/blueSpace.JPG";
                 this.colorStr = "Blue";
                 this.color = Color.DODGERBLUE;
                 break;
             case BROWN:
-                this.fileName = "../resources/brownSpace.jpg";
+                this.fileName = "resources/brownSpace.jpg";
                 this.colorStr = "Brown";
                 this.color = Color.BROWN;
                 break;
             case ORANGE:
-                this.fileName = "../resources/orangeSpace.jpg";
+                this.fileName = "resources/orangeSpace.jpg";
                 this.colorStr = "Orange";
                 this.color = Color.ORANGE;
                 break;
             case PINK:
-                this.fileName = "../resources/pinkSpace.jpg";
+                this.fileName = "resources/pinkSpace.jpg";
                 this.colorStr = "Pink";
                 this.color = Color.MAGENTA;
                 break;
             case PURPLE:
-                this.fileName = "../resources/purpleSpace.jpg";
+                this.fileName = "resources/purpleSpace.jpg";
                 this.colorStr = "Purple";
                 this.color = Color.PURPLE;
                 break;
             case RED:
-                this.fileName = "../resources/redSpace.JPG";
-                this.fileName = "Red";
+                this.fileName = "resources/redSpace.JPG";
+                this.colorStr = "Red";
                 this.color = Color.DARKRED;
                 break;
             default:
-                this.fileName = "../resources/whiteSpace.jpg";
+                this.fileName = "resources/whiteSpace.jpg";
                 this.colorStr = "White";
                 this.color = Color.ANTIQUEWHITE;
         }

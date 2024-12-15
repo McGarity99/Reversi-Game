@@ -44,8 +44,8 @@ public class Reversi extends Application {
     Button potentialSpaceToggleButton;
     HBox bottom;
     VBox root;
-    ComboBox<String> p1ColorSelect = new ComboBox<>();
-    ComboBox<String> p2ColorSelect = new ComboBox<>();
+    ComboBox<String> p1ColorSelect;
+    ComboBox<String> p2ColorSelect;
     Vector<String> validColorStrings = new Vector<>();
     
     PieceColor p1Color = PieceColor.WHITE;
@@ -53,22 +53,23 @@ public class Reversi extends Application {
     ColorPackage p1ColorPackage = new ColorPackage(p1Color); // contains image filename & color string
     ColorPackage p2ColorPackage = new ColorPackage(p2Color); // contains image filename & color string
     
-    Image potenS = new Image("resources/potentialSpace.JPG");
-    Image emptyS = new Image("resources/emptySpace.JPG");
-    Image player1S = new Image(p1ColorPackage.getColorStrings()[0]);
-    Image player2S = new Image(p2ColorPackage.getColorStrings()[0]);
-    Image reversiLogo = new Image("resources/newReversiLogo.png");
+    Image potenS;
+    Image emptyS;
 
+    Image player1S;
+    Image player2S;
+    Image reversiLogo;
 
     ButtonType exitDialog = new ButtonType("OK");
     ButtonType yesAI = new ButtonType("Yes");
     ButtonType noAI = new ButtonType("No");
-    Alert aiQuery = new Alert(AlertType.CONFIRMATION, "Would You Like to Enable the AI?", yesAI, noAI);
-    Alert player1Wins = new Alert(AlertType.INFORMATION, "Player 1 Wins!", exitDialog);
-    Alert player2Wins = new Alert(AlertType.INFORMATION, "Player 2 Wins!", exitDialog);
-    Alert draw = new Alert(AlertType.INFORMATION, "It's a Draw!", exitDialog);
-    Alert insuffMovesP1 = new Alert(AlertType.NONE, "No valid moves remain for Player 1\n GAME OVER", exitDialog);
-    Alert insuffMovesP2 = new Alert(AlertType.NONE, "No valid moves remain for Player 2\n GAME OVER", exitDialog);
+    Alert aiQuery;
+    Alert player1Wins;
+    Alert player2Wins;
+    Alert draw;
+    Alert insuffMovesP1;
+    Alert insuffMovesP2;
+
     GridPane mainPane = new GridPane();
     
     int player2Count = 2;
@@ -80,28 +81,21 @@ public class Reversi extends Application {
     boolean clicked = false;
     boolean potentialSpaceVisible = true;
     
-    Text player1Tracker = new Text("P1: " + player1Count);
-    Text player2Tracker = new Text("P2: " + player2Count);
-    Text currentTurn = new Text("Player 1");	//player1 player always goes first
-    Text colorIndicator = new Text("Current Turn: " + currentTurn.getText());
-    Text status = new Text("Player's turn");
-    Text player1Color = new Text("Player 1 Color:");
-    Text player2Color = new Text("Player 2 Color");
+    Text player1Tracker, player2Tracker, currentTurn;
+    Text colorIndicator, status;
+    Text player1Color, player2Color;
+
     ImageView[][] imgGrid = new ImageView[8][8];
-    ImageView player2EX = new ImageView(player2S);
-    ImageView player1EX = new ImageView(player1S);
-    ImageView emptyEX = new ImageView(emptyS);
-    ImageView potEX = new ImageView(potenS);
-    ImageView theLogo = new ImageView(reversiLogo);
-    ImageView pSpaceToggle = new ImageView(potenS);
+    ImageView player2EX;
+    ImageView player1EX;
+    ImageView emptyEX;
+    ImageView potEX;
+    ImageView theLogo;
+    ImageView pSpaceToggle;
     
     Reversi anotherGame;
     Scene mainScene;
     Stage theStage;
-    
-    public static void main(String[] args) {
-    	launch(args);
-    } //main
 
     /**
      * This method overrides the start method and initializes
@@ -109,7 +103,35 @@ public class Reversi extends Application {
      */
     
    @Override public void start(Stage theStage) {
-        
+        reversiLogo = new Image(getClass().getResource("/resources/newReversiLogo.png").toExternalForm());
+        potenS = new Image("resources/potentialSpace.JPG");
+        emptyS = new Image("resources/emptySpace.JPG");
+        player1S = new Image(p1ColorPackage.getColorStrings()[0]);
+        player2S = new Image(p2ColorPackage.getColorStrings()[0]);
+        //reversiLogo = new Image("resources/newReversiLogo.png");
+
+        player2EX = new ImageView(player2S);
+        player1EX = new ImageView(player1S);
+        emptyEX = new ImageView(emptyS);
+        potEX = new ImageView(potenS);
+        theLogo = new ImageView(reversiLogo);
+        pSpaceToggle = new ImageView(potenS);
+
+        aiQuery = new Alert(AlertType.CONFIRMATION, "Would You Like to Enable the AI?", yesAI, noAI);
+        player1Wins = new Alert(AlertType.INFORMATION, "Player 1 Wins!", exitDialog);
+        player2Wins = new Alert(AlertType.INFORMATION, "Player 2 Wins!", exitDialog);
+        draw = new Alert(AlertType.INFORMATION, "It's a Draw!", exitDialog);
+        insuffMovesP1 = new Alert(AlertType.NONE, "No valid moves remain for Player 1\n GAME OVER", exitDialog);
+        insuffMovesP2 = new Alert(AlertType.NONE, "No valid moves remain for Player 2\n GAME OVER", exitDialog);
+
+        player1Tracker = new Text("P1: " + player1Count);
+        player2Tracker = new Text("P2: " + player2Count);
+        currentTurn = new Text("Player 1");	//player1 player always goes first
+        colorIndicator = new Text("Current Turn: " + currentTurn.getText());
+        status = new Text("Player's turn");
+        player1Color = new Text("Player 1 Color:");
+        player2Color = new Text("Player 2 Color");
+
         setUpOther();
         Optional<ButtonType> r = aiQuery.showAndWait();
        if (r.toString().equals("Optional[ButtonType [text=Yes, buttonData=OTHER]]")) {
@@ -1433,6 +1455,8 @@ public class Reversi extends Application {
         colorPickerBox = new HBox(10);
         colorPickerBox.setBackground(filler);
         validColorStrings = getValidColorStrings();
+        p1ColorSelect = new ComboBox<>();
+        p2ColorSelect = new ComboBox<>();
         p1ColorSelect.getItems().addAll(validColorStrings);
         p2ColorSelect.getItems().addAll(validColorStrings);
         player1Color.setFill(Color.ANTIQUEWHITE);
@@ -1640,5 +1664,8 @@ public class Reversi extends Application {
         return validStrings;
     }
 
-    
+    public static void main(String[] args) {
+        launch(args);
+    }
+
 } //Reversi
