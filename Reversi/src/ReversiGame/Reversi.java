@@ -36,7 +36,9 @@ public class Reversi extends Application {
     ColorPackage cpkg;
 	EventHandler<ActionEvent> exit;
     EventHandler<ActionEvent> potentialToggle;
+    EventHandler<ActionEvent> newColorSelectionEvent;
 	HBox logoBar;
+    HBox exitBar;
     HBox topMenu;
     HBox colorPickerBox;
     HBox turnTracker;
@@ -124,13 +126,13 @@ public class Reversi extends Application {
         insuffMovesP1 = new Alert(AlertType.NONE, "No valid moves remain for Player 1\n GAME OVER", exitDialog);
         insuffMovesP2 = new Alert(AlertType.NONE, "No valid moves remain for Player 2\n GAME OVER", exitDialog);
 
-        player1Tracker = new Text("P1: " + player1Count);
-        player2Tracker = new Text("P2: " + player2Count);
+        player1Tracker = new Text("P1 Score: " + player1Count);
+        player2Tracker = new Text("P2 Score: " + player2Count);
         currentTurn = new Text("Player 1");	//player1 player always goes first
         colorIndicator = new Text("Current Turn: " + currentTurn.getText());
         status = new Text("Player's turn");
         player1Color = new Text("Player 1 Color:");
-        player2Color = new Text("Player 2 Color");
+        player2Color = new Text("Player 2 Color:");
 
         setUpOther();
         Optional<ButtonType> r = aiQuery.showAndWait();
@@ -170,7 +172,7 @@ public class Reversi extends Application {
                 } //if bottom-left of initial setup
             } //for
         } //for loop assigning ImageViews to GridPane
-        root.getChildren().addAll(logoBar, topMenu, mainPane, turnTracker, bottom);
+        root.getChildren().addAll(logoBar, exitBar, topMenu, colorPickerBox, mainPane, turnTracker, bottom);
         setUpScene();
         showPotentials();
     } //start method 
@@ -260,7 +262,7 @@ public class Reversi extends Application {
                 } //if
             } //for
         } //for
-        player1Tracker.setText("P1: " + player1Count);
+        player1Tracker.setText("P1 Score: " + player1Count);
     } //countPlayer1
 
     /**
@@ -277,7 +279,7 @@ public class Reversi extends Application {
                 } //if
             } //for
         } //for
-        player2Tracker.setText("P2: " + player2Count);
+        player2Tracker.setText("P2 Score: " + player2Count);
     } //countPlayer2
 
     /**
@@ -1452,7 +1454,19 @@ public class Reversi extends Application {
     	logoBar.getChildren().add(theLogo);
     	logoBar.setAlignment(Pos.BASELINE_CENTER);
 
-        colorPickerBox = new HBox(10);
+        exit = event -> theStage.close();
+        exitButton = new Button("EXIT");
+        exitButton.setOnAction(exit);
+        exitButton.setTextFill(Color.ANTIQUEWHITE);
+        //exitButton.setStyle("-fx-background-color: #000000");
+        exitButton.setStyle("-fx-background-color: #000000; -fx-border-color: #ff0000");
+        exitBar = new HBox(50);
+        exitBar.setBackground(filler);
+        exitBar.setAlignment(Pos.BASELINE_LEFT);
+        exitBar.getChildren().add(exitButton);
+
+        colorPickerBox = new HBox(50);
+        colorPickerBox.setAlignment(Pos.CENTER);
         colorPickerBox.setBackground(filler);
         validColorStrings = getValidColorStrings();
         p1ColorSelect = new ComboBox<>();
@@ -1461,19 +1475,45 @@ public class Reversi extends Application {
         p2ColorSelect.getItems().addAll(validColorStrings);
         player1Color.setFill(Color.ANTIQUEWHITE);
         player2Color.setFill(Color.ANTIQUEWHITE);
+
+        // set event for color selection
+        p1ColorSelect.setOnAction(event -> {
+            String selectedColor = p1ColorSelect.getSelectionModel().getSelectedItem();
+            if (selectedColor != null) {
+                p1ColorPackage.setFileName(fetchPieceColor(selectedColor));
+                changeColors(PlayerID.PLAYER1, p1ColorPackage);
+                validColorStrings = getValidColorStrings();
+                Platform.runLater(() -> { // IndexOutOfBounds if we don't use runLater
+                    p1ColorSelect.getItems().clear();
+                    p2ColorSelect.getItems().clear();
+                    p1ColorSelect.getItems().addAll(validColorStrings);
+                    p2ColorSelect.getItems().addAll(validColorStrings);
+                });
+            }
+        });
+        p2ColorSelect.setOnAction(event -> {
+            String selectedColor = p2ColorSelect.getSelectionModel().getSelectedItem();
+            if (selectedColor != null) {
+                p2ColorPackage.setFileName(fetchPieceColor(selectedColor));
+                changeColors(PlayerID.PLAYER2, p2ColorPackage);
+                validColorStrings = getValidColorStrings();
+                Platform.runLater(() -> { // IndexOutOfBounds if we don't use runLater
+                    p1ColorSelect.getItems().clear();
+                    p2ColorSelect.getItems().clear();
+                    p1ColorSelect.getItems().addAll(validColorStrings);
+                    p2ColorSelect.getItems().addAll(validColorStrings);
+                });
+            }
+        });
+
         colorPickerBox.getChildren().addAll(player1Color, p1ColorSelect, player2Color, p2ColorSelect);
     	
         topMenu = new HBox(12);
         topMenu.setBackground(filler);
-        exit = event -> theStage.close();
-        exitButton = new Button("EXIT");
-        exitButton.setOnAction(exit);
-        exitButton.setTextFill(Color.ANTIQUEWHITE);
-        //exitButton.setStyle("-fx-background-color: #000000");
-        exitButton.setStyle("-fx-background-color: #000000; -fx-border-color: #ff0000");
-        player1Tracker.setFill(Color.DARKRED);
-        player2Tracker.setFill(Color.DODGERBLUE);
-        topMenu.getChildren().addAll(exitButton, player1Tracker, player2Tracker, colorPickerBox);
+        topMenu.setAlignment(Pos.BASELINE_CENTER);
+        player1Tracker.setFill(Color.ANTIQUEWHITE);
+        player2Tracker.setFill(Color.ANTIQUEWHITE);
+        topMenu.getChildren().addAll(player1Tracker, player2Tracker);
 
         potentialToggle = event -> togglePotentials();
         
@@ -1662,6 +1702,78 @@ public class Reversi extends Application {
             }
         }
         return validStrings;
+    }
+
+    /**
+     * Take a color name as a string and match it to an instance of PieceColor.
+     * @param colorName string representing chosen color
+     * @return a {@code PieceColor} that represents this chosen color
+     */
+    private PieceColor fetchPieceColor(String colorName) {
+        PieceColor result = PieceColor.WHITE;
+        switch (colorName) {
+            case "Alpine":
+                result = PieceColor.ALPINE;
+                break;
+            case "Baby Blue":
+                result = PieceColor.BABYBLUE;
+                break;
+            case "Black":
+                result = PieceColor.BLACK;
+                break;
+            case "Blue":
+                result = PieceColor.BLUE;
+                break;
+            case "Brown":
+                result = PieceColor.BROWN;
+                break;
+            case "Orange":
+                result = PieceColor.ORANGE;
+                break;
+            case "Pink":
+                result = PieceColor.PINK;
+                break;
+            case "Purple":
+                result = PieceColor.PURPLE;
+                break;
+            case "Red":
+                result = PieceColor.RED;
+                break;
+        }
+        return result;
+    }
+
+    /**
+     * Upon selecting a new color for player 1 or player 2, use the respective
+     * {@code ColorPackage} object and PlayerID to change the color of all relevant game pieces
+     * and the turn indicator.
+     */
+    private void changeColors(PlayerID pid, ColorPackage cpkg) {
+        Image newImage = new Image(cpkg.getColorStrings()[0]);
+        switch (pid) {
+            case PLAYER1: // update all p1 pieces and the turn tracker
+                for (int i = 0; i < 8; i++) {
+                    for (int ii = 0; ii < 8; ii++) {
+                        if (imgGrid[i][ii].getImage() == player1S) {
+                            imgGrid[i][ii].setImage(newImage);
+                        }
+                    }
+                }
+                player1S = newImage; // update player 1's global image value AFTER updating all pieces
+                player1EX.setImage(player1S);
+                break;
+            case PLAYER2: // update all p2 pieces and the turn tracker
+                for (int i = 0; i < 8; i++) {
+                    for (int ii = 0; ii < 8; ii++) {
+                        if (imgGrid[i][ii].getImage() == player2S) {
+                            imgGrid[i][ii].setImage(newImage);
+                        }
+                    }
+                }
+                player2S = newImage; // update player 1's global image value AFTER updating all pieces
+                player2EX.setImage(player2S);
+                break;
+        }
     }
 
     public static void main(String[] args) {

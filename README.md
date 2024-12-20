@@ -6,7 +6,7 @@ These include removal of several bugs, drastic alteration of the UI, and the int
 random-select AI with which a single user may play as opposed to the original design of player-vs-player.
 
 Additional features I would like to add eventually include:
-- [ ] AI improvements for increased difficulty
-- [ ] Option to change game's color scheme mid-match
+- [x] AI improvements for increased difficulty
+- [x] Option to change game's color scheme mid-match
 - [ ] Option to save the game and return to it later
 - [x] Ability to show/hide potential space markings

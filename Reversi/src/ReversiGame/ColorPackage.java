@@ -22,7 +22,7 @@ public class ColorPackage {
         return this.color;
     }
 
-    private void setFileName(PieceColor pc) {
+    public void setFileName(PieceColor pc) {
         switch (pc) {
             case ALPINE:
                 this.fileName = "resources/alpineSpace.jpg";
