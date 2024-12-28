@@ -8,5 +8,5 @@ random-select AI with which a single user may play as opposed to the original de
 Additional features I would like to add eventually include:
 - [x] AI improvements for increased difficulty
 - [x] Option to change game's color scheme mid-match
-- [ ] Option to save the game and return to it later
+- [ ] Option to play another game after winning/losing
 - [x] Ability to show/hide potential space markings

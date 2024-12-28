@@ -65,12 +65,15 @@ public class Reversi extends Application {
     ButtonType exitDialog = new ButtonType("OK");
     ButtonType yesAI = new ButtonType("Yes");
     ButtonType noAI = new ButtonType("No");
+    ButtonType yesPlayAgain = new ButtonType("Yes");
+    ButtonType noPlayAgain = new ButtonType("No");
     Alert aiQuery;
     Alert player1Wins;
     Alert player2Wins;
     Alert draw;
     Alert insuffMovesP1;
     Alert insuffMovesP2;
+    Alert playAgainAlert;
 
     GridPane mainPane = new GridPane();
     
@@ -82,6 +85,7 @@ public class Reversi extends Application {
     boolean aiEnabled = false;
     boolean clicked = false;
     boolean potentialSpaceVisible = true;
+    boolean playAgain = false;
     
     Text player1Tracker, player2Tracker, currentTurn;
     Text colorIndicator, status;
@@ -125,6 +129,7 @@ public class Reversi extends Application {
         draw = new Alert(AlertType.INFORMATION, "It's a Draw!", exitDialog);
         insuffMovesP1 = new Alert(AlertType.NONE, "No valid moves remain for Player 1\n GAME OVER", exitDialog);
         insuffMovesP2 = new Alert(AlertType.NONE, "No valid moves remain for Player 2\n GAME OVER", exitDialog);
+        playAgainAlert = new Alert(AlertType.CONFIRMATION, "Would you like to play again?", yesPlayAgain, noPlayAgain);
 
         player1Tracker = new Text("P1 Score: " + player1Count);
         player2Tracker = new Text("P2 Score: " + player2Count);
@@ -1392,7 +1397,6 @@ public class Reversi extends Application {
             } //outer for
             if (validP1s == 0) {
                 insuffMovesP1.showAndWait();
-                //System.out.println("insuffMovesP1");
                 determineEnd();
             } //if no valid moves for player1
         } //if it is player1's turn
@@ -1407,7 +1411,6 @@ public class Reversi extends Application {
             } //outer for
             if (validP2s == 0) {
                 insuffMovesP2.showAndWait();
-               // System.out.println("insuffMovesP2");
                 determineEnd();
             } //if no valid moves for player2
         } //if it is player2's turn
@@ -1421,22 +1424,27 @@ public class Reversi extends Application {
      */
     
     private void determineEnd() {
-
         if (player1Count > player2Count) {
             player1Wins.showAndWait();
-            theStage.close();
-            System.exit(0);
         } //if player1 has higher score
         if (player1Count < player2Count) {
             player2Wins.showAndWait();
-            theStage.close();
-            System.exit(0);
         } //if player2 has higher score
         if (player1Count == player2Count) {
             draw.showAndWait();
+        } //if draw
+
+        Optional<ButtonType> r = playAgainAlert.showAndWait();
+        if (r.toString().equals("Optional[ButtonType [text=Yes, buttonData=OTHER]]")) {
+            playAgain = true;
+        }
+
+        if (!playAgain) {
             theStage.close();
             System.exit(0);
-        } //if draw
+        }
+
+        reset();
     } //determineEnd
 
     /**
@@ -1534,7 +1542,7 @@ public class Reversi extends Application {
         colorIndicator.setFont(new Font(12));
         colorIndicator.setFill(Color.ANTIQUEWHITE);
         colorIndicator.setUnderline(true);
-        colorIndicator.setFill(Color.DARKRED);
+        //colorIndicator.setFill(Color.DARKRED);
         colorIndicator.setStroke(Color.ANTIQUEWHITE);
         colorIndicator.setStrokeWidth(0.25);
         bottom.getChildren().addAll(colorIndicator, pSpaceToggle);
@@ -1774,6 +1782,11 @@ public class Reversi extends Application {
                 player2EX.setImage(player2S);
                 break;
         }
+    }
+
+    // reset the game state to play again
+    private void reset() {
+
     }
 
     public static void main(String[] args) {
